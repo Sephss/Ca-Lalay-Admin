@@ -1,0 +1,143 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Admin Dashboard</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Sora:wght@600;700&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="css/style.css" />
+  </head>
+
+  <body>
+    <div class="shell">
+      <!-- SIDEBAR -->
+      <aside class="sidebar">
+        <div class="brand-mark"><span class="dot"></span> Lalay Admin</div>
+
+        <ul class="nav-group">
+          <li
+            class="nav-item is-active"
+            data-filter="all"
+            onclick="setFilter('all')"
+          >
+            <span>All accounts</span> <span class="count" id="countAll">0</span>
+          </li>
+          <li
+            class="nav-item"
+            data-filter="pending"
+            onclick="setFilter('pending')"
+          >
+            <span>Pending</span> <span class="count" id="countPending">0</span>
+          </li>
+          <li
+            class="nav-item"
+            data-filter="active"
+            onclick="setFilter('active')"
+          >
+            <span>Active</span> <span class="count" id="countActive">0</span>
+          </li>
+          <li
+            class="nav-item"
+            data-filter="suspended"
+            onclick="setFilter('suspended')"
+          >
+            <span>Suspended</span>
+            <span class="count" id="countSuspended">0</span>
+          </li>
+          <li
+            class="nav-item"
+            data-filter="rejected"
+            onclick="setFilter('rejected')"
+          >
+            <span>Rejected</span>
+          </li>
+        </ul>
+
+        <div class="sidebar-foot">Ca-Lalay &middot; Admin Panel</div>
+      </aside>
+
+      <!-- MAIN -->
+      <main class="main">
+        <div class="topbar">
+          <div>
+            <h1>Account management</h1>
+            <p class="sub">
+              Review and manage shop owner and freelancer accounts.
+            </p>
+          </div>
+          <button id="logoutBtn" class="btn-logout">Log out</button>
+        </div>
+
+        <div class="stat-row">
+          <div class="stat-card accent">
+            <span class="value" id="countAllStat">0</span>
+            <span class="label">Total accounts</span>
+          </div>
+          <div class="stat-card">
+            <span class="value" id="countPendingStat">0</span>
+            <span class="label">Awaiting review</span>
+          </div>
+          <div class="stat-card">
+            <span class="value" id="countActiveStat">0</span>
+            <span class="label">Active</span>
+          </div>
+          <div class="stat-card">
+            <span class="value" id="countSuspendedStat">0</span>
+            <span class="label">Suspended</span>
+          </div>
+        </div>
+
+        <div class="toolbar">
+          <input
+            id="searchInput"
+            class="search-input"
+            type="text"
+            placeholder="Search by name or email…"
+          />
+        </div>
+
+        <div class="table-card">
+          <table>
+            <thead>
+              <tr>
+                <th>Account</th>
+                <th>Role</th>
+                <th>Status</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody id="tableBody"></tbody>
+          </table>
+
+          <div id="emptyState" class="empty-state hidden">
+            No accounts match this view.
+          </div>
+        </div>
+      </main>
+    </div>
+
+    <!-- DETAIL PANEL -->
+    <div id="panelOverlay" class="panel-overlay hidden">
+      <div id="detailPanel" class="detail-panel">
+        <div class="panel-header">
+          <span>ACCOUNT DETAILS</span>
+          <button id="closePanel" class="panel-close">&times;</button>
+        </div>
+        <div id="panelBody"></div>
+      </div>
+    </div>
+
+    <!-- FULL IMAGE LIGHTBOX -->
+    <div id="lightbox" class="lightbox hidden">
+      <button id="closeLightbox" class="lightbox-close">&times;</button>
+      <img id="lightboxImg" src="" alt="Submitted document" />
+    </div>
+
+    <script type="module" src="js/authCheck.js"></script>
+    <script type="module" src="js/dashboard.js"></script>
+  </body>
+</html>

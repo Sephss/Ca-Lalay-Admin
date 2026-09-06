@@ -1,0 +1,60 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Admin Login</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Sora:wght@600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/style.css" />
+  </head>
+  <body>
+    <div class="login-shell">
+      <!-- BRAND SIDE -->
+      <section class="login-brand">
+        <div class="brand-mark"><span class="dot"></span> Lalay Admin</div>
+
+        <div class="brand-copy">
+          <h1>Manage every shop and freelancer in one place</h1>
+          <p>
+            Review new sign-ups, approve accounts, and keep the marketplace
+            running smoothly — all from a single dashboard.
+          </p>
+        </div>
+
+        <div class="brand-foot">Access restricted to authorized administrators</div>
+      </section>
+
+      <!-- FORM SIDE -->
+      <section class="login-form-side">
+        <div class="login-form-card">
+          <h2>Sign in</h2>
+          <p class="sub">Enter your admin credentials to continue.</p>
+
+          <p id="errorMsg" class="error-msg hidden"></p>
+
+          <form id="loginForm" novalidate>
+            <div class="field">
+              <label for="email">Email</label>
+              <input id="email" type="email" placeholder="you@lalay.com" autocomplete="username" />
+            </div>
+
+            <div class="field">
+              <label for="password">Password</label>
+              <input id="password" type="password" placeholder="••••••••" autocomplete="current-password" />
+            </div>
+
+            <button id="loginBtn" type="submit" class="btn-primary">
+              <span id="btnText">Sign in</span>
+              <span id="loader" class="spinner hidden"></span>
+            </button>
+          </form>
+
+          <p class="login-foot">Only authorized admins can access this panel.</p>
+        </div>
+      </section>
+    </div>
+
+    <script type="module" src="js/login.js"></script>
+  </body>
+</html>
