@@ -741,9 +741,18 @@ tbody tr:hover {
 }
 
 .panel-actions {
-  display: grid;
-  grid-template-columns: 1fr 1fr 1fr;
+  display: flex;
+  flex-wrap: wrap;
   gap: 10px;
+}
+
+.panel-actions .action-btn {
+  flex: 1 1 auto;
+  min-width: 120px;
+}
+
+.panel-actions .doc-empty {
+  width: 100%;
 }
 
 /* =========================================================
@@ -791,6 +800,80 @@ tbody tr:hover {
   font-size: 30px;
   line-height: 1;
   cursor: pointer;
+}
+
+/* =========================================================
+   REASON MODAL (reject / suspend)
+========================================================= */
+.reason-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 70;
+  background: rgba(28, 26, 26, 0);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  transition: background 0.2s ease;
+}
+
+.reason-overlay.is-open {
+  background: rgba(28, 26, 26, 0.45);
+}
+
+.reason-modal {
+  width: 100%;
+  max-width: 420px;
+  background: var(--white);
+  border-radius: var(--radius-lg);
+  padding: 26px;
+  transform: translateY(10px) scale(0.98);
+  opacity: 0;
+  transition:
+    transform 0.2s ease,
+    opacity 0.2s ease;
+}
+
+.reason-overlay.is-open .reason-modal {
+  transform: translateY(0) scale(1);
+  opacity: 1;
+}
+
+.reason-modal h3 {
+  font-family: var(--font-display);
+  font-size: 18px;
+  font-weight: 600;
+  margin: 0 0 16px;
+}
+
+.reason-modal textarea {
+  width: 100%;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 11px 13px;
+  font-size: 14px;
+  font-family: var(--font-body);
+  resize: vertical;
+  min-height: 90px;
+  margin-bottom: 12px;
+}
+
+.reason-modal textarea:focus {
+  outline: none;
+  border-color: var(--red);
+  box-shadow: 0 0 0 3px var(--red-soft);
+}
+
+.reason-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 6px;
+}
+
+.reason-confirm {
+  width: auto;
+  padding: 10px 20px;
 }
 
 .action-btn {

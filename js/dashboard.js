@@ -22,6 +22,12 @@ const panel = document.getElementById("detailPanel");
 const panelBody = document.getElementById("panelBody");
 const lightbox = document.getElementById("lightbox");
 const lightboxImg = document.getElementById("lightboxImg");
+const reasonModal = document.getElementById("reasonModal");
+const reasonModalTitle = document.getElementById("reasonModalTitle");
+const reasonInput = document.getElementById("reasonInput");
+const reasonError = document.getElementById("reasonError");
+const reasonCancelBtn = document.getElementById("reasonCancelBtn");
+const reasonConfirmBtn = document.getElementById("reasonConfirmBtn");
 const navItems = document.querySelectorAll(".nav-item");
 const statCounts = {
   all: document.getElementById("countAll"),
@@ -65,6 +71,20 @@ function getShopImage(data) {
   if (!val) return null;
   if (typeof val === "string") return val;
   return val.url || val.imageUrl || val.image || null;
+}
+
+function formatDate(ts) {
+  if (!ts) return null;
+  const num = Number(ts);
+  if (Number.isNaN(num)) return null;
+
+  return new Date(num).toLocaleString(undefined, {
+    year: "numeric",
+    month: "short",
+    day: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+  });
 }
 
 function avatar(data) {
@@ -149,6 +169,27 @@ function render() {
 
 loadData();
 
+// ================= ACTIONS PER STATUS =================
+function actionButtons(status, id) {
+  if (status === "pending") {
+    return `
+      <button class="action-btn action-approve" onclick="approveAccount('${id}')">Approve</button>
+      <button class="action-btn action-reject" onclick="openRejectModal('${id}')">Reject</button>
+    `;
+  }
+
+  if (status === "active") {
+    return `<button class="action-btn action-suspend" onclick="openSuspendModal('${id}')">Suspend</button>`;
+  }
+
+  if (status === "suspended") {
+    return `<button class="action-btn action-approve" onclick="activateAccount('${id}')">Activate</button>`;
+  }
+
+  // rejected (and any other terminal status) — no actions
+  return `<p class="doc-empty">No actions available for this account.</p>`;
+}
+
 // ================= DETAIL PANEL =================
 function openPanel(data, id) {
   panelBody.innerHTML = `
@@ -165,6 +206,25 @@ function openPanel(data, id) {
       <div><dt>Contact</dt><dd>${data.contactNum || "—"}</dd></div>
       <div><dt>Location</dt><dd>${data.location || "—"}</dd></div>
       <div><dt>Role</dt><dd>${data.role === "shop_owner" ? "Shop owner" : "Freelancer"}</dd></div>
+      <div><dt>Submitted</dt><dd>${formatDate(data.timestamp) || "—"}</dd></div>
+      ${
+        data.status === "active" && data.dateApproved
+          ? `<div><dt>Approved on</dt><dd>${formatDate(data.dateApproved)}</dd></div>`
+          : ""
+      }
+      ${
+        data.status === "rejected"
+          ? `<div><dt>Rejected on</dt><dd>${formatDate(data.dateRejected) || "—"}</dd></div>
+             <div><dt>Reason</dt><dd>${data.rejectedReason || "—"}</dd></div>`
+          : ""
+      }
+      ${
+        data.status === "suspended" &&
+        data.suspendedReason &&
+        data.suspendedReason !== "none"
+          ? `<div><dt>Suspended reason</dt><dd>${data.suspendedReason}</dd></div>`
+          : ""
+      }
     </dl>
 
     <div class="doc-section">
@@ -180,9 +240,7 @@ function openPanel(data, id) {
     </div>
 
     <div class="panel-actions">
-      <button class="action-btn action-approve" onclick="updateStatus('${id}', 'active')">Approve</button>
-      <button class="action-btn action-reject" onclick="updateStatus('${id}', 'rejected')">Reject</button>
-      <button class="action-btn action-suspend" onclick="updateStatus('${id}', 'suspended')">Suspend</button>
+      ${actionButtons(data.status, id)}
     </div>
   `;
 
@@ -209,6 +267,52 @@ function closeLightbox() {
   }, 200);
 }
 
+// ================= REASON MODAL (reject / suspend) =================
+let reasonSubmitHandler = null;
+
+function openReasonModal({ title, placeholder, confirmLabel, onConfirm }) {
+  reasonModalTitle.textContent = title;
+  reasonInput.value = "";
+  reasonInput.placeholder = placeholder;
+  reasonConfirmBtn.textContent = confirmLabel;
+  reasonError.classList.add("hidden");
+  reasonSubmitHandler = onConfirm;
+
+  reasonModal.classList.remove("hidden");
+  requestAnimationFrame(() => reasonModal.classList.add("is-open"));
+  reasonInput.focus();
+}
+
+function closeReasonModal() {
+  reasonModal.classList.remove("is-open");
+  setTimeout(() => reasonModal.classList.add("hidden"), 200);
+  reasonSubmitHandler = null;
+}
+
+reasonCancelBtn.addEventListener("click", closeReasonModal);
+
+reasonModal.addEventListener("click", (e) => {
+  if (e.target === reasonModal) closeReasonModal();
+});
+
+reasonConfirmBtn.addEventListener("click", async () => {
+  const reason = reasonInput.value.trim();
+
+  if (!reason) {
+    reasonError.textContent = "Please provide a reason before confirming.";
+    reasonError.classList.remove("hidden");
+    return;
+  }
+
+  if (reasonSubmitHandler) {
+    reasonConfirmBtn.disabled = true;
+    await reasonSubmitHandler(reason);
+    reasonConfirmBtn.disabled = false;
+  }
+
+  closeReasonModal();
+});
+
 document.addEventListener("click", (e) => {
   if (e.target.classList.contains("viewBtn")) {
     const id = e.target.dataset.id;
@@ -230,10 +334,52 @@ document.addEventListener("click", (e) => {
   }
 });
 
-// ================= UPDATE STATUS =================
-window.updateStatus = async (id, status) => {
-  await update(ref(db, "users/" + id), { status });
+// ================= ACCOUNT ACTIONS =================
+window.approveAccount = async (id) => {
+  await update(ref(db, "users/" + id), {
+    status: "active",
+    dateApproved: Date.now().toString(),
+  });
   closePanel();
+};
+
+window.activateAccount = async (id) => {
+  await update(ref(db, "users/" + id), {
+    status: "active",
+    suspendedReason: "none",
+  });
+  closePanel();
+};
+
+window.openRejectModal = (id) => {
+  openReasonModal({
+    title: "Reject account",
+    placeholder: "Explain why this account is being rejected…",
+    confirmLabel: "Reject account",
+    onConfirm: async (reason) => {
+      await update(ref(db, "users/" + id), {
+        status: "rejected",
+        dateRejected: Date.now().toString(),
+        rejectedReason: reason,
+      });
+      closePanel();
+    },
+  });
+};
+
+window.openSuspendModal = (id) => {
+  openReasonModal({
+    title: "Suspend account",
+    placeholder: "Explain why this account is being suspended…",
+    confirmLabel: "Suspend account",
+    onConfirm: async (reason) => {
+      await update(ref(db, "users/" + id), {
+        status: "suspended",
+        suspendedReason: reason,
+      });
+      closePanel();
+    },
+  });
 };
 
 // ================= LOGOUT =================
