@@ -21,109 +21,145 @@
         <ul class="nav-group">
           <li
             class="nav-item is-active"
-            data-filter="all"
-            onclick="setFilter('all')"
+            data-view="shop"
+            onclick="setView('shop')"
           >
-            <span>All accounts</span> <span class="count" id="countAll">0</span>
+            <span>Shop Management</span>
+            <span id="navPendingBadge" class="nav-badge hidden">0</span>
           </li>
           <li
             class="nav-item"
-            data-filter="pending"
-            onclick="setFilter('pending')"
+            data-view="customers"
+            onclick="setView('customers')"
           >
-            <span>Pending</span> <span class="count" id="countPending">0</span>
-          </li>
-          <li
-            class="nav-item"
-            data-filter="active"
-            onclick="setFilter('active')"
-          >
-            <span>Active</span> <span class="count" id="countActive">0</span>
-          </li>
-          <li
-            class="nav-item"
-            data-filter="suspended"
-            onclick="setFilter('suspended')"
-          >
-            <span>Suspended</span>
-            <span class="count" id="countSuspended">0</span>
-          </li>
-          <li
-            class="nav-item"
-            data-filter="rejected"
-            onclick="setFilter('rejected')"
-          >
-            <span>Rejected</span>
-          </li>
-          <li
-            class="nav-item"
-            data-filter="terminated"
-            onclick="setFilter('terminated')"
-          >
-            <span>Terminated</span>
+            <span>Customers</span>
           </li>
         </ul>
 
-        <div class="sidebar-foot">Ca-Lalay &middot; Admin Panel</div>
+        <div class="sidebar-foot">
+          <p class="sidebar-caption">Ca-Lalay &middot; Admin Panel</p>
+          <button id="logoutBtn" class="btn-logout">Log out</button>
+        </div>
       </aside>
 
       <!-- MAIN -->
       <main class="main">
         <div class="topbar">
           <div>
-            <h1>Account management</h1>
-            <p class="sub">
+            <h1 id="topbarTitle">Shop management</h1>
+            <p class="sub" id="topbarSub">
               Review and manage shop owner and freelancer accounts.
             </p>
           </div>
-          <button id="logoutBtn" class="btn-logout">Log out</button>
         </div>
 
-        <div class="stat-row">
-          <div class="stat-card accent">
-            <span class="value" id="countAllStat">0</span>
-            <span class="label">Total accounts</span>
+        <!-- SHOP MANAGEMENT VIEW -->
+        <section id="shopView">
+          <div class="filter-row">
+            <button
+              type="button"
+              class="filter-card is-active"
+              data-filter="all"
+              onclick="setShopFilter('all')"
+            >
+              <span class="filter-value" id="countAllValue">0</span>
+              <span class="filter-label">All accounts</span>
+            </button>
+            <button
+              type="button"
+              class="filter-card"
+              data-filter="pending"
+              onclick="setShopFilter('pending')"
+            >
+              <span class="filter-value" id="countPendingValue">0</span>
+              <span class="filter-label">Pending</span>
+            </button>
+            <button
+              type="button"
+              class="filter-card"
+              data-filter="active"
+              onclick="setShopFilter('active')"
+            >
+              <span class="filter-value" id="countActiveValue">0</span>
+              <span class="filter-label">Active</span>
+            </button>
+            <button
+              type="button"
+              class="filter-card"
+              data-filter="suspended"
+              onclick="setShopFilter('suspended')"
+            >
+              <span class="filter-value" id="countSuspendedValue">0</span>
+              <span class="filter-label">Suspended</span>
+            </button>
+            <button
+              type="button"
+              class="filter-card"
+              data-filter="rejected"
+              onclick="setShopFilter('rejected')"
+            >
+              <span class="filter-value" id="countRejectedValue">0</span>
+              <span class="filter-label">Rejected</span>
+            </button>
           </div>
-          <div class="stat-card">
-            <span class="value" id="countPendingStat">0</span>
-            <span class="label">Awaiting review</span>
-          </div>
-          <div class="stat-card">
-            <span class="value" id="countActiveStat">0</span>
-            <span class="label">Active</span>
-          </div>
-          <div class="stat-card">
-            <span class="value" id="countSuspendedStat">0</span>
-            <span class="label">Suspended</span>
-          </div>
-        </div>
 
-        <div class="toolbar">
-          <input
-            id="searchInput"
-            class="search-input"
-            type="text"
-            placeholder="Search by name or email…"
-          />
-        </div>
-
-        <div class="table-card">
-          <table>
-            <thead>
-              <tr>
-                <th>Account</th>
-                <th>Role</th>
-                <th>Status</th>
-                <th></th>
-              </tr>
-            </thead>
-            <tbody id="tableBody"></tbody>
-          </table>
-
-          <div id="emptyState" class="empty-state hidden">
-            No accounts match this view.
+          <div class="toolbar">
+            <input
+              id="searchInput"
+              class="search-input"
+              type="text"
+              placeholder="Search by shop name or email…"
+            />
           </div>
-        </div>
+
+          <div class="table-card">
+            <table>
+              <thead>
+                <tr>
+                  <th>Account</th>
+                  <th>Role</th>
+                  <th>Status</th>
+                  <th></th>
+                </tr>
+              </thead>
+              <tbody id="tableBody"></tbody>
+            </table>
+
+            <div id="emptyState" class="empty-state hidden">
+              No accounts match this view.
+            </div>
+          </div>
+        </section>
+
+        <!-- CUSTOMERS VIEW -->
+        <section id="customersView" class="hidden">
+          <div class="toolbar">
+            <input
+              id="customerSearchInput"
+              class="search-input"
+              type="text"
+              placeholder="Search by name or email…"
+            />
+          </div>
+
+          <div class="table-card">
+            <table>
+              <thead>
+                <tr>
+                  <th>Customer</th>
+                  <th>Contact</th>
+                  <th>Status</th>
+                  <th></th>
+                </tr>
+              </thead>
+              <tbody id="customerTableBody"></tbody>
+            </table>
+
+            <div id="customerEmptyState" class="empty-state hidden">
+              No customers match your search.
+            </div>
+          </div>
+        </section>
       </main>
     </div>
 
@@ -155,8 +191,22 @@
         ></textarea>
         <p id="reasonError" class="error-msg hidden"></p>
         <div class="reason-actions">
-          <button id="reasonCancelBtn" class="btn-logout">Cancel</button>
+          <button id="reasonCancelBtn" class="btn-secondary">Cancel</button>
           <button id="reasonConfirmBtn" class="btn-primary reason-confirm">
+            Confirm
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- CONFIRM MODAL (approve, etc.) -->
+    <div id="confirmModal" class="reason-overlay hidden">
+      <div class="reason-modal">
+        <h3 id="confirmModalTitle">Confirm action</h3>
+        <p id="confirmModalMessage" class="confirm-message"></p>
+        <div class="reason-actions">
+          <button id="confirmCancelBtn" class="btn-secondary">Cancel</button>
+          <button id="confirmConfirmBtn" class="btn-primary reason-confirm">
             Confirm
           </button>
         </div>
