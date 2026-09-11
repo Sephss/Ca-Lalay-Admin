@@ -10,11 +10,16 @@ import { signOut } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-aut
 import { auth, db } from "./firebase.js";
 
 // ================= STATE =================
-let currentView = "shop"; // "shop" | "customers"
+let currentView = "overview"; // "overview" | "shop" | "customers"
 let shopFilter = "all";
 let shopSearchValue = "";
 let customerSearchValue = "";
+let signupRange = "daily"; // "daily" | "weekly"
 let allUsers = [];
+
+let signupsChartInstance = null;
+let statusChartInstance = null;
+let pipelineChartInstance = null;
 
 const SHOP_ROLES = ["shop_owner", "freelancer"];
 const CUSTOMER_ROLE = "customer";
@@ -29,9 +34,13 @@ const customerSearchInput = document.getElementById("customerSearchInput");
 
 const shopView = document.getElementById("shopView");
 const customersView = document.getElementById("customersView");
+const overviewView = document.getElementById("overviewView");
 const topbarTitle = document.getElementById("topbarTitle");
 const topbarSub = document.getElementById("topbarSub");
 const navPendingBadge = document.getElementById("navPendingBadge");
+const agingAlert = document.getElementById("agingAlert");
+const agingList = document.getElementById("agingList");
+const activityFeed = document.getElementById("activityFeed");
 
 const panelOverlay = document.getElementById("panelOverlay");
 const panel = document.getElementById("detailPanel");
@@ -54,6 +63,10 @@ const navItems = document.querySelectorAll(".nav-item");
 const filterCards = document.querySelectorAll(".filter-card");
 
 const VIEW_COPY = {
+  overview: {
+    title: "Overview",
+    sub: "A snapshot of signups, approvals, and account health.",
+  },
   shop: {
     title: "Shop management",
     sub: "Review and manage shop owner and freelancer accounts.",
@@ -72,6 +85,7 @@ window.setView = (view) => {
     item.classList.toggle("is-active", item.dataset.view === view);
   });
 
+  overviewView.classList.toggle("hidden", view !== "overview");
   shopView.classList.toggle("hidden", view !== "shop");
   customersView.classList.toggle("hidden", view !== "customers");
 
@@ -126,6 +140,75 @@ function formatDate(ts) {
     hour: "2-digit",
     minute: "2-digit",
   });
+}
+
+function formatDuration(ms) {
+  if (ms == null || Number.isNaN(ms)) return "—";
+  const hours = ms / (1000 * 60 * 60);
+  if (hours < 24) return `${hours.toFixed(1)} hrs`;
+  return `${(hours / 24).toFixed(1)} days`;
+}
+
+function timeAgo(ts) {
+  const diffMs = Date.now() - ts;
+  const mins = Math.floor(diffMs / 60000);
+  if (mins < 1) return "just now";
+  if (mins < 60) return `${mins}m ago`;
+  const hours = Math.floor(mins / 60);
+  if (hours < 24) return `${hours}h ago`;
+  const days = Math.floor(hours / 24);
+  if (days < 30) return `${days}d ago`;
+  return formatDate(ts);
+}
+
+function startOfDay(ts) {
+  const d = new Date(ts);
+  d.setHours(0, 0, 0, 0);
+  return d.getTime();
+}
+
+function startOfWeek(ts) {
+  const d = new Date(ts);
+  const diff = d.getDate() - d.getDay(); // Sunday as start of week
+  d.setDate(diff);
+  d.setHours(0, 0, 0, 0);
+  return d.getTime();
+}
+
+// Builds an ordered list of time buckets ending today, for chart x-axes.
+function buildBuckets(range) {
+  const buckets = [];
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+
+  if (range === "daily") {
+    for (let i = 29; i >= 0; i--) {
+      const d = new Date(today);
+      d.setDate(d.getDate() - i);
+      buckets.push({
+        key: d.getTime(),
+        label: d.toLocaleDateString(undefined, {
+          month: "short",
+          day: "numeric",
+        }),
+      });
+    }
+  } else {
+    const currentWeekStart = startOfWeek(today.getTime());
+    for (let i = 11; i >= 0; i--) {
+      const d = new Date(currentWeekStart);
+      d.setDate(d.getDate() - i * 7);
+      buckets.push({
+        key: d.getTime(),
+        label: d.toLocaleDateString(undefined, {
+          month: "short",
+          day: "numeric",
+        }),
+      });
+    }
+  }
+
+  return buckets;
 }
 
 // ================= SHOP ACCOUNT HELPERS =================
@@ -185,6 +268,7 @@ function loadData() {
     updateCounts();
     render();
     renderCustomers();
+    renderOverview();
   });
 }
 
@@ -284,6 +368,357 @@ function renderCustomers() {
 
   customerEmptyState.classList.toggle("hidden", rows.length !== 0);
 }
+
+// ================= OVERVIEW: DATA HELPERS =================
+function computeSignupsSeries(range) {
+  const buckets = buildBuckets(range);
+  const shopCounts = new Array(buckets.length).fill(0);
+  const customerCounts = new Array(buckets.length).fill(0);
+  const bucketFn = range === "daily" ? startOfDay : startOfWeek;
+
+  allUsers.forEach((u) => {
+    const ts = Number(u.timestamp);
+    if (!ts || Number.isNaN(ts)) return;
+
+    const bucketKey = bucketFn(ts);
+    const idx = buckets.findIndex((b) => b.key === bucketKey);
+    if (idx === -1) return;
+
+    if (SHOP_ROLES.includes(u.role)) shopCounts[idx]++;
+    else if (u.role === CUSTOMER_ROLE) customerCounts[idx]++;
+  });
+
+  return { labels: buckets.map((b) => b.label), shopCounts, customerCounts };
+}
+
+// Weekly approved-vs-rejected throughput for the pipeline chart (last 12 weeks).
+function computePipelineSeries() {
+  const buckets = buildBuckets("weekly");
+  const approvedCounts = new Array(buckets.length).fill(0);
+  const rejectedCounts = new Array(buckets.length).fill(0);
+
+  allUsers
+    .filter((u) => SHOP_ROLES.includes(u.role))
+    .forEach((u) => {
+      if (u.dateApproved) {
+        const idx = buckets.findIndex(
+          (b) => b.key === startOfWeek(Number(u.dateApproved)),
+        );
+        if (idx !== -1) approvedCounts[idx]++;
+      }
+      if (u.dateRejected) {
+        const idx = buckets.findIndex(
+          (b) => b.key === startOfWeek(Number(u.dateRejected)),
+        );
+        if (idx !== -1) rejectedCounts[idx]++;
+      }
+    });
+
+  return {
+    labels: buckets.map((b) => b.label),
+    approvedCounts,
+    rejectedCounts,
+  };
+}
+
+function computeAvgApprovalTime() {
+  const approved = allUsers.filter(
+    (u) => SHOP_ROLES.includes(u.role) && u.dateApproved && u.timestamp,
+  );
+  if (approved.length === 0) return null;
+
+  const totalMs = approved.reduce(
+    (sum, u) => sum + (Number(u.dateApproved) - Number(u.timestamp)),
+    0,
+  );
+  return totalMs / approved.length;
+}
+
+function computeAgingPending() {
+  const now = Date.now();
+
+  return allUsers
+    .filter(
+      (u) =>
+        SHOP_ROLES.includes(u.role) && u.status === "pending" && u.timestamp,
+    )
+    .map((u) => ({ ...u, waitingMs: now - Number(u.timestamp) }))
+    .filter((u) => u.waitingMs > 48 * 60 * 60 * 1000)
+    .sort((a, b) => b.waitingMs - a.waitingMs);
+}
+
+function computeRecentActivity() {
+  const events = [];
+
+  allUsers.forEach((u) => {
+    if (u.timestamp) {
+      const label = SHOP_ROLES.includes(u.role)
+        ? `New ${u.role === "shop_owner" ? "shop" : "freelancer"} signup — ${u.shopName || u.email || "—"}`
+        : u.role === CUSTOMER_ROLE
+          ? `New customer signup — ${customerName(u) !== "—" ? customerName(u) : u.email || "—"}`
+          : null;
+
+      if (label)
+        events.push({ type: "signup", ts: Number(u.timestamp), text: label });
+    }
+
+    if (SHOP_ROLES.includes(u.role) && u.dateApproved) {
+      events.push({
+        type: "approved",
+        ts: Number(u.dateApproved),
+        text: `Approved — ${u.shopName || u.email || "—"}`,
+      });
+    }
+
+    if (SHOP_ROLES.includes(u.role) && u.dateRejected) {
+      events.push({
+        type: "rejected",
+        ts: Number(u.dateRejected),
+        text: `Rejected — ${u.shopName || u.email || "—"}`,
+      });
+    }
+  });
+
+  return events
+    .filter((e) => !Number.isNaN(e.ts))
+    .sort((a, b) => b.ts - a.ts)
+    .slice(0, 8);
+}
+
+// ================= OVERVIEW: RENDER =================
+function renderKpis() {
+  const shopAccounts = allUsers.filter((u) => SHOP_ROLES.includes(u.role));
+  const customers = allUsers.filter((u) => u.role === CUSTOMER_ROLE);
+  const pending = shopAccounts.filter((u) => u.status === "pending").length;
+
+  const weekAgo = Date.now() - 7 * 24 * 60 * 60 * 1000;
+  const newSignups = allUsers.filter(
+    (u) => Number(u.timestamp) >= weekAgo,
+  ).length;
+
+  document.getElementById("kpiShopAccounts").textContent = shopAccounts.length;
+  document.getElementById("kpiCustomers").textContent = customers.length;
+  document.getElementById("kpiPending").textContent = pending;
+  document.getElementById("kpiNewSignups").textContent = newSignups;
+}
+
+function renderSignupsChart() {
+  const canvas = document.getElementById("signupsChart");
+  if (!canvas) return;
+
+  if (typeof Chart === "undefined") {
+    canvas.parentElement.innerHTML = `<p class="doc-empty">Charts library failed to load — check your internet connection and refresh.</p>`;
+    return;
+  }
+
+  const { labels, shopCounts, customerCounts } =
+    computeSignupsSeries(signupRange);
+
+  if (signupsChartInstance) {
+    signupsChartInstance.data.labels = labels;
+    signupsChartInstance.data.datasets[0].data = shopCounts;
+    signupsChartInstance.data.datasets[1].data = customerCounts;
+    signupsChartInstance.update();
+    return;
+  }
+
+  signupsChartInstance = new Chart(canvas, {
+    type: "line",
+    data: {
+      labels,
+      datasets: [
+        {
+          label: "Shops",
+          data: shopCounts,
+          borderColor: "#ea5050",
+          backgroundColor: "rgba(234, 80, 80, 0.12)",
+          tension: 0.3,
+          fill: true,
+        },
+        {
+          label: "Customers",
+          data: customerCounts,
+          borderColor: "#3f3a39",
+          backgroundColor: "rgba(63, 58, 57, 0.08)",
+          tension: 0.3,
+          fill: true,
+        },
+      ],
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: { legend: { position: "bottom" } },
+      scales: { y: { beginAtZero: true, ticks: { precision: 0 } } },
+    },
+  });
+}
+
+function renderStatusChart() {
+  const canvas = document.getElementById("statusChart");
+  if (!canvas) return;
+
+  if (typeof Chart === "undefined") {
+    canvas.parentElement.innerHTML = `<p class="doc-empty">Charts library failed to load — check your internet connection and refresh.</p>`;
+    return;
+  }
+
+  const shopAccounts = allUsers.filter((u) => SHOP_ROLES.includes(u.role));
+  const data = [
+    shopAccounts.filter((u) => u.status === "active").length,
+    shopAccounts.filter((u) => u.status === "pending").length,
+    shopAccounts.filter((u) => u.status === "suspended").length,
+    shopAccounts.filter((u) => u.status === "rejected").length,
+  ];
+
+  if (statusChartInstance) {
+    statusChartInstance.data.datasets[0].data = data;
+    statusChartInstance.update();
+    return;
+  }
+
+  statusChartInstance = new Chart(canvas, {
+    type: "doughnut",
+    data: {
+      labels: ["Active", "Pending", "Suspended", "Rejected"],
+      datasets: [
+        { data, backgroundColor: ["#1c7a45", "#a6650a", "#b8501f", "#c23636"] },
+      ],
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      cutout: "62%",
+      plugins: { legend: { position: "bottom" } },
+    },
+  });
+}
+
+function renderPipelineChart() {
+  const canvas = document.getElementById("pipelineChart");
+  if (!canvas) return;
+
+  if (typeof Chart === "undefined") {
+    canvas.parentElement.innerHTML = `<p class="doc-empty">Charts library failed to load — check your internet connection and refresh.</p>`;
+    return;
+  }
+
+  const { labels, approvedCounts, rejectedCounts } = computePipelineSeries();
+
+  if (pipelineChartInstance) {
+    pipelineChartInstance.data.labels = labels;
+    pipelineChartInstance.data.datasets[0].data = approvedCounts;
+    pipelineChartInstance.data.datasets[1].data = rejectedCounts;
+    pipelineChartInstance.update();
+    return;
+  }
+
+  pipelineChartInstance = new Chart(canvas, {
+    type: "bar",
+    data: {
+      labels,
+      datasets: [
+        { label: "Approved", data: approvedCounts, backgroundColor: "#1c7a45" },
+        { label: "Rejected", data: rejectedCounts, backgroundColor: "#c23636" },
+      ],
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: { legend: { position: "bottom" } },
+      scales: { y: { beginAtZero: true, ticks: { precision: 0 } } },
+    },
+  });
+}
+
+function renderPipelineStats() {
+  document.getElementById("avgApprovalTime").textContent = formatDuration(
+    computeAvgApprovalTime(),
+  );
+
+  const { approvedCounts, rejectedCounts } = computePipelineSeries();
+  document.getElementById("approvedCount").textContent = approvedCounts.reduce(
+    (a, b) => a + b,
+    0,
+  );
+  document.getElementById("rejectedCount").textContent = rejectedCounts.reduce(
+    (a, b) => a + b,
+    0,
+  );
+}
+
+function renderAgingAlert() {
+  const aging = computeAgingPending();
+
+  if (aging.length === 0) {
+    agingAlert.classList.add("hidden");
+    return;
+  }
+
+  agingAlert.classList.remove("hidden");
+  agingList.innerHTML = aging
+    .slice(0, 5)
+    .map(
+      (u) => `
+        <li>
+          <span>${u.shopName || u.email || "—"}</span>
+          <span class="aging-days">${Math.floor(u.waitingMs / (1000 * 60 * 60 * 24))}d waiting</span>
+          <button type="button" class="aging-review" onclick="reviewAccount('${u.id}')">Review</button>
+        </li>
+      `,
+    )
+    .join("");
+}
+
+function renderActivityFeed() {
+  const events = computeRecentActivity();
+
+  if (events.length === 0) {
+    activityFeed.innerHTML = `<p class="doc-empty">No recent activity yet.</p>`;
+    return;
+  }
+
+  const icons = { signup: "＋", approved: "✓", rejected: "✕" };
+
+  activityFeed.innerHTML = events
+    .map(
+      (ev) => `
+        <li class="activity-item activity-${ev.type}">
+          <span class="activity-icon">${icons[ev.type]}</span>
+          <div>
+            <p class="activity-text">${ev.text}</p>
+            <span class="activity-time">${timeAgo(ev.ts)}</span>
+          </div>
+        </li>
+      `,
+    )
+    .join("");
+}
+
+function renderOverview() {
+  renderKpis();
+  renderSignupsChart();
+  renderStatusChart();
+  renderPipelineStats();
+  renderPipelineChart();
+  renderAgingAlert();
+  renderActivityFeed();
+}
+
+window.setSignupRange = (range) => {
+  signupRange = range;
+  document.querySelectorAll(".toggle-btn").forEach((btn) => {
+    btn.classList.toggle("is-active", btn.dataset.range === range);
+  });
+  renderSignupsChart();
+};
+
+window.reviewAccount = (id) => {
+  const data = allUsers.find((u) => u.id === id);
+  if (!data) return;
+  setView("shop");
+  openPanel(data, id);
+};
 
 loadData();
 

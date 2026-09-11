@@ -10,6 +10,7 @@
       rel="stylesheet"
     />
     <link rel="stylesheet" href="css/style.css" />
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4/dist/chart.umd.min.js"></script>
   </head>
 
   <body>
@@ -21,9 +22,12 @@
         <ul class="nav-group">
           <li
             class="nav-item is-active"
-            data-view="shop"
-            onclick="setView('shop')"
+            data-view="overview"
+            onclick="setView('overview')"
           >
+            <span>Overview</span>
+          </li>
+          <li class="nav-item" data-view="shop" onclick="setView('shop')">
             <span>Shop Management</span>
             <span id="navPendingBadge" class="nav-badge hidden">0</span>
           </li>
@@ -46,15 +50,114 @@
       <main class="main">
         <div class="topbar">
           <div>
-            <h1 id="topbarTitle">Shop management</h1>
+            <h1 id="topbarTitle">Overview</h1>
             <p class="sub" id="topbarSub">
-              Review and manage shop owner and freelancer accounts.
+              A snapshot of signups, approvals, and account health.
             </p>
           </div>
         </div>
 
+        <!-- OVERVIEW VIEW -->
+        <section id="overviewView">
+          <div class="kpi-row">
+            <div class="kpi-card">
+              <span class="kpi-value" id="kpiShopAccounts">0</span>
+              <span class="kpi-label">Shop accounts</span>
+            </div>
+            <div class="kpi-card">
+              <span class="kpi-value" id="kpiCustomers">0</span>
+              <span class="kpi-label">Customers</span>
+            </div>
+            <div class="kpi-card accent">
+              <span class="kpi-value" id="kpiPending">0</span>
+              <span class="kpi-label">Pending approvals</span>
+            </div>
+            <div class="kpi-card">
+              <span class="kpi-value" id="kpiNewSignups">0</span>
+              <span class="kpi-label">New signups this week</span>
+            </div>
+          </div>
+
+          <div class="overview-grid">
+            <div class="panel-block">
+              <div class="panel-block-header">
+                <h2>Signups over time</h2>
+                <div class="toggle-group">
+                  <button
+                    type="button"
+                    class="toggle-btn is-active"
+                    data-range="daily"
+                    onclick="setSignupRange('daily')"
+                  >
+                    Daily
+                  </button>
+                  <button
+                    type="button"
+                    class="toggle-btn"
+                    data-range="weekly"
+                    onclick="setSignupRange('weekly')"
+                  >
+                    Weekly
+                  </button>
+                </div>
+              </div>
+              <div class="chart-wrap">
+                <canvas id="signupsChart"></canvas>
+              </div>
+            </div>
+
+            <div class="panel-block">
+              <div class="panel-block-header">
+                <h2>Shop status breakdown</h2>
+              </div>
+              <div class="chart-wrap">
+                <canvas id="statusChart"></canvas>
+              </div>
+            </div>
+          </div>
+
+          <div class="overview-grid">
+            <div class="panel-block">
+              <div class="panel-block-header">
+                <h2>Approval pipeline</h2>
+              </div>
+
+              <div class="pipeline-stats">
+                <div class="pipeline-stat">
+                  <span class="pipeline-value" id="avgApprovalTime">—</span>
+                  <span class="pipeline-label">Avg. time to approval</span>
+                </div>
+                <div class="pipeline-stat">
+                  <span class="pipeline-value" id="approvedCount">0</span>
+                  <span class="pipeline-label">Approved (12 wks)</span>
+                </div>
+                <div class="pipeline-stat">
+                  <span class="pipeline-value" id="rejectedCount">0</span>
+                  <span class="pipeline-label">Rejected (12 wks)</span>
+                </div>
+              </div>
+
+              <div class="chart-wrap chart-wrap-sm">
+                <canvas id="pipelineChart"></canvas>
+              </div>
+
+              <div id="agingAlert" class="aging-alert hidden">
+                <h3>Waiting longest for a decision</h3>
+                <ul id="agingList" class="aging-list"></ul>
+              </div>
+            </div>
+
+            <div class="panel-block">
+              <div class="panel-block-header">
+                <h2>Recent activity</h2>
+              </div>
+              <ul id="activityFeed" class="activity-feed"></ul>
+            </div>
+          </div>
+        </section>
+
         <!-- SHOP MANAGEMENT VIEW -->
-        <section id="shopView">
+        <section id="shopView" class="hidden">
           <div class="filter-row">
             <button
               type="button"
