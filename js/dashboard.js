@@ -731,27 +731,29 @@ function actionButtons(status, id) {
     `;
   }
 
-  if (status === "active") {
-    return `<button class="action-btn action-suspend" onclick="openSuspendModal('${id}')">Suspend</button>`;
-  }
+  // ---- Suspend / Activate temporarily disabled ----
+  // if (status === "active") {
+  //   return `<button class="action-btn action-suspend" onclick="openSuspendModal('${id}')">Suspend</button>`;
+  // }
+  //
+  // if (status === "suspended") {
+  //   return `<button class="action-btn action-approve" onclick="activateAccount('${id}')">Activate</button>`;
+  // }
 
-  if (status === "suspended") {
-    return `<button class="action-btn action-approve" onclick="activateAccount('${id}')">Activate</button>`;
-  }
-
-  // rejected — no actions
+  // active, rejected, suspended — no actions for now
   return `<p class="doc-empty">No actions available for this account.</p>`;
 }
 
 // ================= ACTIONS PER STATUS (customers) =================
 function customerActionButtons(status, id) {
-  if (status === "active") {
-    return `<button class="action-btn action-suspend" onclick="openSuspendModal('${id}')">Suspend</button>`;
-  }
-
-  if (status === "suspended") {
-    return `<button class="action-btn action-approve" onclick="activateAccount('${id}')">Activate</button>`;
-  }
+  // ---- Suspend / Activate temporarily disabled ----
+  // if (status === "active") {
+  //   return `<button class="action-btn action-suspend" onclick="openSuspendModal('${id}')">Suspend</button>`;
+  // }
+  //
+  // if (status === "suspended") {
+  //   return `<button class="action-btn action-approve" onclick="activateAccount('${id}')">Activate</button>`;
+  // }
 
   return `<p class="doc-empty">No actions available for this account.</p>`;
 }
@@ -994,20 +996,21 @@ window.confirmApprove = (id) => {
   });
 };
 
-window.activateAccount = async (id) => {
-  const account = allUsers.find((u) => u.id === id);
-
-  await update(ref(db, "users/" + id), {
-    status: "active",
-    suspendedReason: "none",
-  });
-
-  if (account && account.role === "shop_owner") {
-    await setShopServicesStatus(id, "active");
-  }
-
-  closePanel();
-};
+// ---- Suspend / Activate temporarily disabled ----
+// window.activateAccount = async (id) => {
+//   const account = allUsers.find((u) => u.id === id);
+//
+//   await update(ref(db, "users/" + id), {
+//     status: "active",
+//     suspendedReason: "none",
+//   });
+//
+//   if (account && account.role === "shop_owner") {
+//     await setShopServicesStatus(id, "active");
+//   }
+//
+//   closePanel();
+// };
 
 window.openRejectModal = (id) => {
   openReasonModal({
@@ -1025,27 +1028,28 @@ window.openRejectModal = (id) => {
   });
 };
 
-window.openSuspendModal = (id) => {
-  const account = allUsers.find((u) => u.id === id);
-
-  openReasonModal({
-    title: "Suspend account",
-    placeholder: "Explain why this account is being suspended…",
-    confirmLabel: "Suspend account",
-    onConfirm: async (reason) => {
-      await update(ref(db, "users/" + id), {
-        status: "suspended",
-        suspendedReason: reason,
-      });
-
-      if (account && account.role === "shop_owner") {
-        await setShopServicesStatus(id, "inactive");
-      }
-
-      closePanel();
-    },
-  });
-};
+// ---- Suspend / Activate temporarily disabled ----
+// window.openSuspendModal = (id) => {
+//   const account = allUsers.find((u) => u.id === id);
+//
+//   openReasonModal({
+//     title: "Suspend account",
+//     placeholder: "Explain why this account is being suspended…",
+//     confirmLabel: "Suspend account",
+//     onConfirm: async (reason) => {
+//       await update(ref(db, "users/" + id), {
+//         status: "suspended",
+//         suspendedReason: reason,
+//       });
+//
+//       if (account && account.role === "shop_owner") {
+//         await setShopServicesStatus(id, "inactive");
+//       }
+//
+//       closePanel();
+//     },
+//   });
+// };
 
 // ================= LOGOUT =================
 const logoutBtn = document.getElementById("logoutBtn");
