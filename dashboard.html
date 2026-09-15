@@ -166,7 +166,7 @@
               onclick="setShopFilter('all')"
             >
               <span class="filter-value" id="countAllValue">0</span>
-              <span class="filter-label">All accounts</span>
+              <span class="filter-label">All shops and freelancers</span>
             </button>
             <button
               type="button"
@@ -232,6 +232,26 @@
               No accounts match this view.
             </div>
           </div>
+
+          <div id="shopPagination" class="pagination hidden">
+            <button
+              type="button"
+              id="shopPrevBtn"
+              class="pagination-btn"
+              onclick="shopPrevPage()"
+            >
+              Previous
+            </button>
+            <span id="shopPageInfo" class="pagination-info">Page 1 of 1</span>
+            <button
+              type="button"
+              id="shopNextBtn"
+              class="pagination-btn"
+              onclick="shopNextPage()"
+            >
+              Next
+            </button>
+          </div>
         </section>
 
         <!-- CUSTOMERS VIEW -->
@@ -261,6 +281,28 @@
             <div id="customerEmptyState" class="empty-state hidden">
               No customers match your search.
             </div>
+          </div>
+
+          <div id="customerPagination" class="pagination hidden">
+            <button
+              type="button"
+              id="customerPrevBtn"
+              class="pagination-btn"
+              onclick="customerPrevPage()"
+            >
+              Previous
+            </button>
+            <span id="customerPageInfo" class="pagination-info"
+              >Page 1 of 1</span
+            >
+            <button
+              type="button"
+              id="customerNextBtn"
+              class="pagination-btn"
+              onclick="customerNextPage()"
+            >
+              Next
+            </button>
           </div>
         </section>
       </main>

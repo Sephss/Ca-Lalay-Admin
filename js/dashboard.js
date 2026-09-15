@@ -15,7 +15,11 @@ let shopFilter = "all";
 let shopSearchValue = "";
 let customerSearchValue = "";
 let signupRange = "daily"; // "daily" | "weekly"
+let shopPage = 1;
+let customerPage = 1;
 let allUsers = [];
+
+const PAGE_SIZE = 10;
 
 let signupsChartInstance = null;
 let statusChartInstance = null;
@@ -96,6 +100,7 @@ window.setView = (view) => {
 // ================= SHOP FILTER (pending / active / suspended / rejected) =================
 window.setShopFilter = (val) => {
   shopFilter = val;
+  shopPage = 1;
 
   filterCards.forEach((card) => {
     card.classList.toggle("is-active", card.dataset.filter === val);
@@ -107,11 +112,13 @@ window.setShopFilter = (val) => {
 // ================= SEARCH =================
 searchInput.addEventListener("input", (e) => {
   shopSearchValue = e.target.value.toLowerCase();
+  shopPage = 1;
   render();
 });
 
 customerSearchInput.addEventListener("input", (e) => {
   customerSearchValue = e.target.value.toLowerCase();
+  customerPage = 1;
   renderCustomers();
 });
 
@@ -291,6 +298,58 @@ function updateCounts() {
   navPendingBadge.classList.toggle("hidden", pending === 0);
 }
 
+// ================= PAGINATION =================
+function paginate(items, page, pageSize) {
+  const totalPages = Math.max(1, Math.ceil(items.length / pageSize));
+  const safePage = Math.min(Math.max(1, page), totalPages);
+  const start = (safePage - 1) * pageSize;
+
+  return {
+    pageItems: items.slice(start, start + pageSize),
+    totalPages,
+    safePage,
+  };
+}
+
+function renderPaginationControls(scope, totalItems, page, totalPages) {
+  const wrap = document.getElementById(`${scope}Pagination`);
+  const info = document.getElementById(`${scope}PageInfo`);
+  const prevBtn = document.getElementById(`${scope}PrevBtn`);
+  const nextBtn = document.getElementById(`${scope}NextBtn`);
+
+  if (!wrap || !info || !prevBtn || !nextBtn) return;
+
+  if (totalItems === 0) {
+    wrap.classList.add("hidden");
+    return;
+  }
+
+  wrap.classList.remove("hidden");
+  info.textContent = `Page ${page} of ${totalPages}`;
+  prevBtn.disabled = page <= 1;
+  nextBtn.disabled = page >= totalPages;
+}
+
+window.shopPrevPage = () => {
+  shopPage = Math.max(1, shopPage - 1);
+  render();
+};
+
+window.shopNextPage = () => {
+  shopPage += 1;
+  render();
+};
+
+window.customerPrevPage = () => {
+  customerPage = Math.max(1, customerPage - 1);
+  renderCustomers();
+};
+
+window.customerNextPage = () => {
+  customerPage += 1;
+  renderCustomers();
+};
+
 // ================= RENDER: SHOP MANAGEMENT TABLE =================
 function render() {
   const shopAccounts = allUsers.filter((u) => SHOP_ROLES.includes(u.role));
@@ -305,7 +364,14 @@ function render() {
     return match;
   });
 
-  tableBody.innerHTML = rows
+  const { pageItems, totalPages, safePage } = paginate(
+    rows,
+    shopPage,
+    PAGE_SIZE,
+  );
+  shopPage = safePage;
+
+  tableBody.innerHTML = pageItems
     .map(
       (data) => `
         <tr>
@@ -329,6 +395,7 @@ function render() {
     .join("");
 
   emptyState.classList.toggle("hidden", rows.length !== 0);
+  renderPaginationControls("shop", rows.length, safePage, totalPages);
 }
 
 // ================= RENDER: CUSTOMERS TABLE =================
@@ -343,7 +410,14 @@ function renderCustomers() {
     return match;
   });
 
-  customerTableBody.innerHTML = rows
+  const { pageItems, totalPages, safePage } = paginate(
+    rows,
+    customerPage,
+    PAGE_SIZE,
+  );
+  customerPage = safePage;
+
+  customerTableBody.innerHTML = pageItems
     .map(
       (data) => `
         <tr>
@@ -367,6 +441,7 @@ function renderCustomers() {
     .join("");
 
   customerEmptyState.classList.toggle("hidden", rows.length !== 0);
+  renderPaginationControls("customer", rows.length, safePage, totalPages);
 }
 
 // ================= OVERVIEW: DATA HELPERS =================
@@ -796,15 +871,33 @@ function openPanel(data, id) {
     </dl>
 
     <div class="doc-section">
-      <span class="doc-label">Submitted document</span>
-      ${
-        data.imageUrl
-          ? `<button type="button" class="doc-thumb" data-full="${data.imageUrl}">
-               <img src="${data.imageUrl}" alt="Submitted document">
-               <span class="doc-thumb-hint">View full image</span>
-             </button>`
-          : `<p class="doc-empty">No document submitted.</p>`
-      }
+      <span class="doc-label">Submitted documents</span>
+      ${(() => {
+        const docs = [
+          data.verificationImage1,
+          data.verificationImage2,
+          data.verificationImage3,
+        ].filter(Boolean);
+
+        if (docs.length === 0) {
+          return `<p class="doc-empty">No documents submitted.</p>`;
+        }
+
+        return `
+            <div class="doc-grid">
+              ${docs
+                .map(
+                  (url, i) => `
+                    <button type="button" class="doc-thumb" data-full="${url}">
+                      <img src="${url}" alt="Submitted document ${i + 1}">
+                      <span class="doc-thumb-hint">View full image</span>
+                    </button>
+                  `,
+                )
+                .join("")}
+            </div>
+          `;
+      })()}
     </div>
 
     <div class="panel-actions">

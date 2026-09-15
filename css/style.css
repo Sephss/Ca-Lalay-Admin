@@ -877,6 +877,50 @@ tbody tr:hover {
   font-size: 14px;
 }
 
+.pagination {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  margin-top: 16px;
+}
+
+.pagination-btn {
+  background: var(--surface);
+  border: none;
+  color: var(--ink);
+  padding: 8px 16px;
+  border-radius: var(--radius-sm);
+  font-size: 13px;
+  font-weight: 600;
+  font-family: var(--font-body);
+  cursor: pointer;
+  box-shadow:
+    4px 4px 9px var(--neu-dark),
+    -4px -4px 9px var(--neu-light);
+  transition:
+    box-shadow 0.15s ease,
+    opacity 0.15s ease;
+}
+
+.pagination-btn:hover:not(:disabled) {
+  box-shadow:
+    inset 3px 3px 7px var(--neu-dark),
+    inset -3px -3px 7px var(--neu-light);
+}
+
+.pagination-btn:disabled {
+  opacity: 0.45;
+  cursor: default;
+  box-shadow: none;
+}
+
+.pagination-info {
+  font-size: 13px;
+  color: var(--muted);
+  font-weight: 500;
+}
+
 /* =========================================================
    DETAIL PANEL (slide-in)
 ========================================================= */
@@ -990,6 +1034,12 @@ tbody tr:hover {
   margin-bottom: 10px;
 }
 
+.doc-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+}
+
 .doc-thumb {
   position: relative;
   display: block;
@@ -1005,7 +1055,7 @@ tbody tr:hover {
 .doc-thumb img {
   display: block;
   width: 100%;
-  height: 160px;
+  height: 100px;
   object-fit: cover;
 }
 
@@ -1352,8 +1402,12 @@ tbody tr:hover {
     flex: 1 1 100%;
   }
 
+  .doc-grid {
+    grid-template-columns: repeat(3, 1fr);
+    gap: 6px;
+  }
   .doc-thumb img {
-    height: 130px;
+    height: 72px;
   }
 
   .reason-modal {
