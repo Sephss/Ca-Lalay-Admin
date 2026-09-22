@@ -8,9 +8,10 @@ import {
 import { signOut } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
 
 import { auth, db } from "./firebase.js";
+import { logActivity } from "./activityLog.js"; // NEW
 
 // ================= STATE =================
-let currentView = "overview"; // "overview" | "shop" | "customers"
+let currentView = "overview"; // "overview" | "shop" | "customers" | "activitylog"
 let shopFilter = "all";
 let shopSearchValue = "";
 let customerSearchValue = "";
@@ -39,6 +40,7 @@ const customerSearchInput = document.getElementById("customerSearchInput");
 const shopView = document.getElementById("shopView");
 const customersView = document.getElementById("customersView");
 const overviewView = document.getElementById("overviewView");
+const activityLogView = document.getElementById("activityLogView"); // NEW
 const topbarTitle = document.getElementById("topbarTitle");
 const topbarSub = document.getElementById("topbarSub");
 const navPendingBadge = document.getElementById("navPendingBadge");
@@ -72,12 +74,17 @@ const VIEW_COPY = {
     sub: "A snapshot of signups, approvals, and account health.",
   },
   shop: {
-    title: "Shop management",
+    title: "Provider management",
     sub: "Review and manage shop owner and freelancer accounts.",
   },
   customers: {
     title: "Customers",
     sub: "Browse and search registered customers.",
+  },
+  activitylog: {
+    // NEW
+    title: "Activity Log",
+    sub: "A record of every approval and rejection made by admins.",
   },
 };
 
@@ -92,6 +99,7 @@ window.setView = (view) => {
   overviewView.classList.toggle("hidden", view !== "overview");
   shopView.classList.toggle("hidden", view !== "shop");
   customersView.classList.toggle("hidden", view !== "customers");
+  activityLogView.classList.toggle("hidden", view !== "activitylog"); // NEW
 
   topbarTitle.textContent = VIEW_COPY[view].title;
   topbarSub.textContent = VIEW_COPY[view].sub;
@@ -352,7 +360,14 @@ window.customerNextPage = () => {
 
 // ================= RENDER: SHOP MANAGEMENT TABLE =================
 function render() {
-  const shopAccounts = allUsers.filter((u) => SHOP_ROLES.includes(u.role));
+  const shopAccounts = allUsers
+    .filter((u) => SHOP_ROLES.includes(u.role))
+    .sort((a, b) => {
+      const timestampA = Number(a.timestamp || 0);
+      const timestampB = Number(b.timestamp || 0);
+
+      return timestampB - timestampA;
+    });
 
   const rows = shopAccounts.filter((data) => {
     if (shopFilter !== "all" && data.status !== shopFilter) return false;
@@ -603,7 +618,7 @@ function renderSignupsChart() {
       labels,
       datasets: [
         {
-          label: "Shops",
+          label: "Providers",
           data: shopCounts,
           borderColor: "#ea5050",
           backgroundColor: "rgba(234, 80, 80, 0.12)",
@@ -1074,6 +1089,15 @@ window.approveAccount = async (id) => {
     status: "active",
     dateApproved: Date.now().toString(),
   });
+
+  // NEW — activity log entry
+  const account = allUsers.find((u) => u.id === id);
+  await logActivity("APPROVED_SHOP", {
+    shopUid: id,
+    shopName: (account && (account.shopName || account.email)) || "—",
+    reason: "Application met the required verification details.",
+  });
+
   closePanel();
 };
 
@@ -1116,6 +1140,15 @@ window.openRejectModal = (id) => {
         dateRejected: Date.now().toString(),
         rejectedReason: reason,
       });
+
+      // NEW — activity log entry
+      const account = allUsers.find((u) => u.id === id);
+      await logActivity("REJECTED_SHOP", {
+        shopUid: id,
+        shopName: (account && (account.shopName || account.email)) || "—",
+        reason,
+      });
+
       closePanel();
     },
   });

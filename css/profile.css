@@ -1,0 +1,141 @@
+/* ================= PROFILE PAGE ================= */
+
+.profile-page {
+  display: grid;
+  gap: 20px;
+  max-width: 900px;
+}
+
+.profile-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 18px;
+  padding: 24px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.04);
+}
+
+.profile-card-header {
+  margin-bottom: 24px;
+}
+
+.profile-card-header h2 {
+  margin: 0 0 6px;
+  font-family: "Sora", sans-serif;
+  font-size: 18px;
+  color: var(--ink);
+}
+
+.profile-card-header p {
+  margin: 0;
+  font-size: 13px;
+  color: var(--muted);
+}
+
+/* ================= PROFILE FORM ================= */
+
+.profile-form-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 18px 24px;
+  max-width: 700px;
+}
+
+.profile-field {
+  margin-bottom: 2px;
+}
+
+.profile-field label {
+  display: block;
+  margin-bottom: 7px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--ink);
+}
+
+.profile-field input {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 12px 14px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--white);
+  color: var(--ink);
+  font-family: inherit;
+  font-size: 14px;
+  outline: none;
+  transition:
+    border-color 0.2s ease,
+    box-shadow 0.2s ease;
+}
+
+.profile-field input:focus {
+  border-color: var(--red);
+  box-shadow: 0 0 0 3px rgba(234, 80, 80, 0.1);
+}
+
+.profile-field input[readonly] {
+  background: #f5f5f5;
+  color: var(--muted);
+  cursor: not-allowed;
+}
+
+/* ================= PROFILE MESSAGE ================= */
+
+.profile-message {
+  margin: 18px 0 15px;
+  padding: 10px 12px;
+  border-radius: 8px;
+  font-size: 13px;
+}
+
+.profile-message.error {
+  background: rgba(194, 62, 62, 0.08);
+  color: var(--red-dark);
+}
+
+.profile-message.success {
+  background: rgba(28, 122, 69, 0.08);
+  color: #1c7a45;
+}
+
+/* ================= SAVE BUTTON ================= */
+
+.profile-save-btn {
+  margin-top: 20px;
+}
+
+.profile-save-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* ================= PASSWORD ================= */
+
+.password-form {
+  max-width: 520px;
+}
+
+.password-form .profile-field {
+  margin-bottom: 17px;
+}
+
+.profile-password-btn {
+  margin-top: 4px;
+}
+
+.profile-password-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* ================= RESPONSIVE ================= */
+
+@media (max-width: 700px) {
+  .profile-form-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .profile-card {
+    padding: 18px;
+  }
+}

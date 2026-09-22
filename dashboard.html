@@ -28,7 +28,7 @@
             <span>Overview</span>
           </li>
           <li class="nav-item" data-view="shop" onclick="setView('shop')">
-            <span>Shop Management</span>
+            <span>Provider Management</span>
             <span id="navPendingBadge" class="nav-badge hidden">0</span>
           </li>
           <li
@@ -37,6 +37,17 @@
             onclick="setView('customers')"
           >
             <span>Customers</span>
+          </li>
+          <li
+            class="nav-item"
+            data-view="activitylog"
+            onclick="setView('activitylog')"
+          >
+            <span>Activity Log</span>
+          </li>
+          <!-- PROFILE -->
+          <li class="nav-item" onclick="window.location.href = 'profile.html'">
+            <span>Profile</span>
           </li>
         </ul>
 
@@ -62,7 +73,7 @@
           <div class="kpi-row">
             <div class="kpi-card">
               <span class="kpi-value" id="kpiShopAccounts">0</span>
-              <span class="kpi-label">Shop accounts</span>
+              <span class="kpi-label">Provider accounts</span>
             </div>
             <div class="kpi-card">
               <span class="kpi-value" id="kpiCustomers">0</span>
@@ -108,7 +119,7 @@
 
             <div class="panel-block">
               <div class="panel-block-header">
-                <h2>Shop status breakdown</h2>
+                <h2>Provider status breakdown</h2>
               </div>
               <div class="chart-wrap">
                 <canvas id="statusChart"></canvas>
@@ -211,7 +222,7 @@
               id="searchInput"
               class="search-input"
               type="text"
-              placeholder="Search by shop name or email…"
+              placeholder="Search by provider name or email…"
             />
           </div>
 
@@ -305,6 +316,92 @@
             </button>
           </div>
         </section>
+
+        <!-- ACTIVITY LOG VIEW -->
+        <section id="activityLogView" class="hidden">
+          <div class="filter-row">
+            <button
+              type="button"
+              class="filter-card is-active"
+              data-filter="all"
+              onclick="setLogFilter('all')"
+            >
+              <span class="filter-value" id="logCountAllValue">0</span>
+              <span class="filter-label">All actions</span>
+            </button>
+            <button
+              type="button"
+              class="filter-card"
+              data-filter="APPROVED_SHOP"
+              onclick="setLogFilter('APPROVED_SHOP')"
+            >
+              <span class="filter-value" id="logCountApprovedValue">0</span>
+              <span class="filter-label">Approved</span>
+            </button>
+            <button
+              type="button"
+              class="filter-card"
+              data-filter="REJECTED_SHOP"
+              onclick="setLogFilter('REJECTED_SHOP')"
+            >
+              <span class="filter-value" id="logCountRejectedValue">0</span>
+              <span class="filter-label">Rejected</span>
+            </button>
+          </div>
+
+          <div
+            class="toolbar"
+            style="display: flex; gap: 10px; align-items: center"
+          >
+            <input
+              id="logSearchInput"
+              class="search-input"
+              type="text"
+              placeholder="Search by provider name or reason…"
+            />
+            <button type="button" id="printLogBtn" class="btn-secondary">
+              Print
+            </button>
+          </div>
+
+          <div class="table-card">
+            <table>
+              <thead>
+                <tr>
+                  <th>Date &amp; Time</th>
+                  <th>Action</th>
+                  <th>Shop</th>
+                  <th>Reason</th>
+                </tr>
+              </thead>
+              <tbody id="activityLogTableBody"></tbody>
+            </table>
+
+            <div id="activityLogEmptyState" class="empty-state hidden">
+              No activity logged yet.
+            </div>
+          </div>
+
+          <div id="logPagination" class="pagination hidden">
+            <button
+              type="button"
+              id="logPrevBtn"
+              class="pagination-btn"
+              onclick="logPrevPage()"
+            >
+              Previous
+            </button>
+            <span id="logPageInfo" class="pagination-info">Page 1 of 1</span>
+            <button
+              type="button"
+              id="logNextBtn"
+              class="pagination-btn"
+              onclick="logNextPage()"
+            >
+              Next
+            </button>
+          </div>
+        </section>
       </main>
     </div>
 
@@ -353,6 +450,53 @@
           <button id="confirmCancelBtn" class="btn-secondary">Cancel</button>
           <button id="confirmConfirmBtn" class="btn-primary reason-confirm">
             Confirm
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- LOG DATE RANGE MODAL (print) -->
+    <div id="logDateRangeModal" class="reason-overlay hidden">
+      <div class="reason-modal">
+        <h3>Print activity log</h3>
+        <p class="confirm-message">
+          Leave both dates blank to print everything currently shown, or set a
+          range to limit the printout.
+        </p>
+
+        <label
+          for="logStartDate"
+          style="display: block; font-size: 13px; margin-bottom: 4px"
+          >Start date</label
+        >
+        <input
+          type="date"
+          id="logStartDate"
+          style="width: 100%; margin-bottom: 12px"
+        />
+
+        <label
+          for="logEndDate"
+          style="display: block; font-size: 13px; margin-bottom: 4px"
+          >End date</label
+        >
+        <input
+          type="date"
+          id="logEndDate"
+          style="width: 100%; margin-bottom: 12px"
+        />
+
+        <p id="logDateRangeError" class="error-msg hidden"></p>
+
+        <div class="reason-actions">
+          <button id="logDateRangeCancelBtn" class="btn-secondary">
+            Cancel
+          </button>
+          <button
+            id="logDateRangeConfirmBtn"
+            class="btn-primary reason-confirm"
+          >
+            Print
           </button>
         </div>
       </div>

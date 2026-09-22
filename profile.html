@@ -1,0 +1,226 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Admin Profile</title>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Sora:wght@600;700&display=swap"
+      rel="stylesheet"
+    />
+
+    <link rel="stylesheet" href="css/style.css" />
+    <link rel="stylesheet" href="css/profile.css" />
+  </head>
+
+  <body>
+    <div class="shell">
+      <aside class="sidebar">
+        <div class="brand-mark">
+          <span class="dot"></span>
+          Ca-Lalay Admin
+        </div>
+
+        <ul class="nav-group">
+          <li
+            class="nav-item"
+            onclick="window.location.href = 'dashboard.html'"
+          >
+            <span>Overview</span>
+          </li>
+
+          <li
+            class="nav-item"
+            onclick="window.location.href = 'dashboard.html'"
+          >
+            <span>Provider Management</span>
+          </li>
+
+          <li
+            class="nav-item"
+            onclick="window.location.href = 'dashboard.html'"
+          >
+            <span>Customers</span>
+          </li>
+
+          <li
+            class="nav-item"
+            onclick="window.location.href = 'dashboard.html'"
+          >
+            <span>Activity Log</span>
+          </li>
+
+          <li class="nav-item is-active">
+            <span>Profile</span>
+          </li>
+        </ul>
+
+        <div class="sidebar-foot">
+          <p class="sidebar-caption">Ca-Lalay &middot; Admin Panel</p>
+          <button id="logoutBtn" class="btn-logout">Log out</button>
+        </div>
+      </aside>
+
+      <main class="main">
+        <div class="topbar">
+          <div>
+            <h1>Profile</h1>
+            <p class="sub">
+              Manage your administrator account information and password.
+            </p>
+          </div>
+        </div>
+
+        <section class="profile-page">
+          <!-- PERSONAL INFORMATION -->
+          <div class="profile-card">
+            <div class="profile-card-header">
+              <div>
+                <h2>Personal Information</h2>
+                <p>
+                  Update the information associated with your administrator
+                  account.
+                </p>
+              </div>
+            </div>
+
+            <form id="profileForm">
+              <div class="profile-form-grid">
+                <div class="profile-field">
+                  <label for="profileFirstNameInput"> First Name </label>
+
+                  <input
+                    type="text"
+                    id="profileFirstNameInput"
+                    placeholder="Enter first name"
+                    required
+                  />
+                </div>
+
+                <div class="profile-field">
+                  <label for="profileLastNameInput"> Last Name </label>
+
+                  <input
+                    type="text"
+                    id="profileLastNameInput"
+                    placeholder="Enter last name"
+                    required
+                  />
+                </div>
+
+                <div class="profile-field">
+                  <label for="profileContactInput"> Contact Number </label>
+
+                  <input
+                    type="text"
+                    id="profileContactInput"
+                    placeholder="Enter contact number"
+                    required
+                  />
+                </div>
+
+                <div class="profile-field">
+                  <label for="profileEmailInput"> Email </label>
+
+                  <input
+                    type="email"
+                    id="profileEmailInput"
+                    placeholder="Email"
+                    readonly
+                  />
+                </div>
+
+                <div class="profile-field">
+                  <label for="profileRoleInput"> Role </label>
+
+                  <input
+                    type="text"
+                    id="profileRoleInput"
+                    value="Admin"
+                    readonly
+                  />
+                </div>
+              </div>
+
+              <p id="profileMessage" class="profile-message hidden"></p>
+
+              <button
+                type="submit"
+                id="saveProfileBtn"
+                class="btn-primary profile-save-btn"
+              >
+                Save Changes
+              </button>
+            </form>
+          </div>
+
+          <!-- CHANGE PASSWORD -->
+          <div class="profile-card">
+            <div class="profile-card-header">
+              <div>
+                <h2>Change Password</h2>
+                <p>
+                  Update your password to keep your administrator account
+                  secure.
+                </p>
+              </div>
+            </div>
+
+            <form id="changePasswordForm" class="password-form">
+              <div class="profile-field">
+                <label for="currentPassword"> Current Password </label>
+
+                <input
+                  type="password"
+                  id="currentPassword"
+                  placeholder="Enter your current password"
+                  autocomplete="current-password"
+                  required
+                />
+              </div>
+
+              <div class="profile-field">
+                <label for="newPassword"> New Password </label>
+
+                <input
+                  type="password"
+                  id="newPassword"
+                  placeholder="Enter your new password"
+                  autocomplete="new-password"
+                  required
+                />
+              </div>
+
+              <div class="profile-field">
+                <label for="confirmPassword"> Confirm New Password </label>
+
+                <input
+                  type="password"
+                  id="confirmPassword"
+                  placeholder="Confirm your new password"
+                  autocomplete="new-password"
+                  required
+                />
+              </div>
+
+              <p id="passwordMessage" class="profile-message hidden"></p>
+
+              <button
+                type="submit"
+                id="changePasswordBtn"
+                class="btn-primary profile-password-btn"
+              >
+                Change Password
+              </button>
+            </form>
+          </div>
+        </section>
+      </main>
+    </div>
+
+    <script type="module" src="js/authCheck.js"></script>
+    <script type="module" src="js/profile.js"></script>
+  </body>
+</html>
